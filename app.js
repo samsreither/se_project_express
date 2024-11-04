@@ -9,6 +9,9 @@ const usersRouter = require("./routes/users");
 const mainRouter = require("./routes/index");
 const clothingItemsRoutes = require("./routes/clothingItems");
 
+// import error handlers
+const { errorHandler, notFoundHandler } = require("./utils/errors");
+
 // connect to MongoDB
 mongoose
   .connect("mongodb://127.0.0.1:27017/wtwr_db", {
@@ -18,10 +21,8 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// route handlers
-app.use("/users", usersRouter);
-app.use("/clothingItems", clothingItemsRoutes);
-app.use("/index", mainRouter);
+// route handler
+app.use("/", mainRouter);
 
 // handle non-existent routes
 app.use(notFoundHandler);
