@@ -26,10 +26,10 @@ const createItem = (req, res) => {
 
 // return all clothing items
 const getItems = (req, res) => {
-  return ClothingItem.find({})
+  ClothingItem.find({})
     .then((items) => res.status(200).send(items))
     .catch((e) => {
-      return res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
+      res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
     });
 };
 
@@ -60,9 +60,9 @@ const deleteItem = (req, res) => {
     .catch((err) => {
       if (err.kind === "ObjectId") {
         return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
-      } else {
-        return res.status(SERVER_ERROR).send({ message: "Error deleting item" });
       }
+      return res.status(SERVER_ERROR).send({ message: "Error deleting item" });
+
     });
 };
 
@@ -102,7 +102,7 @@ const dislikeItem = (req, res) => {
     return res.status(400).send({ message: "Invalid item ID" });
   }
 
-  ClothingItem.findByIdAndUpdate(
+  return ClothingItem.findByIdAndUpdate(
     itemId,
     { $pull: { likes: userId } }, // Remove userId from likes
     { new: true }

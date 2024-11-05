@@ -1,5 +1,5 @@
-const User = require('../models/user');
 const mongoose = require("mongoose");
+const User = require('../models/user');
 
 // Get /users
 const getUsers = (req, res) => {
@@ -39,16 +39,16 @@ const getUser = (req, res) => {
     return res.status(400).send({message: "Invalid user ID format"});
   }
 
-  User.findById(userId)
+  return User.findById(userId)
   .then((user) => {
     if (!user) {
       return res.status(404).send({message: "User not found." });
     }
-    res.status(200).send(user);
+    return res.status(200).send(user);
   })
   .catch((err) => {
     console.error(err);
-    res.status(500).send({ message: err.message });
+    return res.status(500).send({ message: err.message });
   });
 }
 
