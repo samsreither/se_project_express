@@ -1,3 +1,7 @@
+const BAD_REQUEST = 400;
+const NOT_FOUND = 404;
+const SERVER_ERROR = 500;
+
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
 
@@ -13,4 +17,7 @@ const notFoundHandler = (req, res) => {
 module.exports = {
   errorHandler,
   notFoundHandler,
+  BAD_REQUEST,
+  NOT_FOUND,
+  SERVER_ERROR,
 };

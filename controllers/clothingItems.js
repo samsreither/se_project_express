@@ -1,149 +1,103 @@
-const ClothingItem = require('../models/clothingItem');
+const ClothingItem = require("../models/clothingItem");
 const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR } = require("../utils/errors");
 
-// Create a new clothing item
-const createClothingItem = async (req, res) => {
-    try {
-        const clothingItem = new ClothingItem(req.body);
-        await clothingItem.save();
-        res.status(201).json(clothingItem);
-    } catch (error) {
-        console.error(error); // Log the error
-        if (error.name === 'ValidationError') {
-            return res.status(BAD_REQUEST).json({ message: "Invalid data passed for clothing item creation." });
-        }
-        res.status(SERVER_ERROR).json({ message: "An error has occurred on the server." });
-    }
+// create clothing item
+const createItem = (req, res) => {
+  console.log(req);
+  console.log(req.body);
+
+  const { name, weather, imageUrl } = req.body;
+
+  ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
+    .then((item) => {
+      console.log(item);
+      res.status(201).send({ data: item });
+    })
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "ValidationError") {
+        res.status(BAD_REQUEST).send({ message: err.message });
+      } else {
+        res.status(SERVER_ERROR).send({ message: err.message });
+      }
+    });
 };
 
-// Get all clothing items
-const getClothingItems = async (req, res) => {
-    try {
-        const clothingItems = await ClothingItem.find();
-        res.status(200).json(clothingItems);
-    } catch (error) {
-        console.error(error); // Log the error
-        res.status(SERVER_ERROR).json({ message: "An error has occurred on the server." });
-    }
+// return all clothing items
+const getItems = (req, res) => {
+  ClothingItem.find({})
+    .then((items) => res.status(200).send(items))
+    .catch((e) => {
+      res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
+    });
 };
 
-// Get a clothing item by ID
-const getClothingItemById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const clothingItem = await ClothingItem.findById(id).orFail(() => {
-            const error = new Error("Clothing item not found");
-            error.status = NOT_FOUND;
-            throw error;
-        });
+// delete an item by _id
+const deleteItem = (req, res) => {
+  const { itemId } = req.params;
 
-        res.status(200).json(clothingItem);
-    } catch (error) {
-        console.error(error); // Log the error
-        if (error.status === NOT_FOUND) {
-            return res.status(NOT_FOUND).json({ message: "Clothing item not found." });
-        }
-        res.status(SERVER_ERROR).json({ message: "An error has occurred on the server." });
-    }
+  ClothingItem.findByIdAndDelete(itemId)
+    .then((item) => {
+      if (!item) {
+        return res.status(NOT_FOUND).send({ message: "Item not found" });
+      }
+      res.status(200).send({ message: "Item deleted" });
+    })
+    .catch((err) => {
+      if (err.kind === "ObjectId") {
+        res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
+      } else {
+        res.status(SERVER_ERROR).send({ message: "Error deleting item" });
+      }
+    });
 };
 
-// Update a clothing item by ID
-const updateClothingItem = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const clothingItem = await ClothingItem.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
-            .orFail(() => {
-                const error = new Error("Clothing item not found");
-                error.status = NOT_FOUND;
-                throw error;
-            });
+// like an item
+const likeItem = (req, res) => {
+  const { itemId } = req.params;
+  const userId = req.user._id;
 
-        res.status(200).json(clothingItem);
-    } catch (error) {
-        console.error(error); // Log the error
-        if (error.status === NOT_FOUND) {
-            return res.status(NOT_FOUND).json({ message: "Clothing item not found." });
-        } else if (error.name === 'ValidationError') {
-            return res.status(BAD_REQUEST).json({ message: "Invalid data passed for clothing item update." });
-        }
-        res.status(SERVER_ERROR).json({ message: "An error has occurred on the server." });
-    }
-};
+  // check if itemId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    return res.status(BAD_REQUEST).send({ message: "Invalid item ID" }); // Handle invalid ID format
+  }
 
-// Delete a clothing item by ID
-const deleteClothingItem = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const clothingItem = await ClothingItem.findByIdAndDelete(id).orFail(() => {
-            const error = new Error("Clothing item not found");
-            error.status = NOT_FOUND;
-            throw error;
-        });
+  ClothingItem.findById(itemId)
+    .then((item) => {
+      if (!item) {
+        return res.status(NOT_FOUND).send({ message: "Item not found" });
+      }
 
-        res.status(204).send();
-    } catch (error) {
-        console.error(error); // Log the error
-        if (error.status === NOT_FOUND) {
-            return res.status(NOT_FOUND).json({ message: "Clothing item not found." });
-        }
-        res.status(SERVER_ERROR).json({ message: "An error has occurred on the server." });
-    }
-};
+      // check if user has already liked the item
+      const hasLiked = item.likes.includes(userId);
 
-// Like a clothing item
-const likeClothingItem = async (req, res) => {
-    const { itemId } = req.params; // Access the item ID from the request parameters
-    try {
-        const clothingItem = await ClothingItem.findByIdAndUpdate(
-            itemId,
-            { $addToSet: { likes: req.user._id } }, // Add the user's ID to the likes array if not already present
-            { new: true }
-        ).orFail(() => {
-            const error = new Error("Clothing item not found");
-            error.status = NOT_FOUND;
-            throw error;
-        });
-
-        res.status(200).json(clothingItem);
-    } catch (error) {
-        console.error(error); // Log the error
-        if (error.status === NOT_FOUND) {
-            return res.status(NOT_FOUND).json({ message: "Clothing item not found." });
-        }
-        res.status(SERVER_ERROR).json({ message: "An error has occurred on the server." });
-    }
-};
-
-// Unlike a clothing item
-const dislikeClothingItem = async (req, res) => {
-    const { itemId } = req.params; // Access the item ID from the request parameters
-    try {
-        const clothingItem = await ClothingItem.findByIdAndUpdate(
-            itemId,
-            { $pull: { likes: req.user._id } }, // Remove the user's ID from the likes array
-            { new: true }
-        ).orFail(() => {
-            const error = new Error("Clothing item not found");
-            error.status = NOT_FOUND;
-            throw error;
-        });
-
-        res.status(200).json(clothingItem);
-    } catch (error) {
-        console.error(error); // Log the error
-        if (error.status === NOT_FOUND) {
-            return res.status(NOT_FOUND).json({ message: "Clothing item not found." });
-        }
-        res.status(SERVER_ERROR).json({ message: "An error has occurred on the server." });
-    }
+      if (hasLiked) {
+        // If already liked, remove the user from likes
+        item.likes = item.likes.filter((like) => !like.equals(userId));
+        return item
+          .save()
+          .then(() =>
+            res.status(200).send({ message: "Like removed", data: item })
+          );
+      } else {
+        // If not liked, add the user to likes
+        item.likes.push(userId);
+        return item
+          .save()
+          .then(() =>
+            res.status(200).send({ message: "Item liked", data: item })
+          );
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(SERVER_ERROR).send({ message: "Error liking item" });
+    });
 };
 
 module.exports = {
-    createClothingItem,
-    getClothingItems,
-    getClothingItemById,
-    updateClothingItem,
-    deleteClothingItem,
-    likeClothingItem,
-    dislikeClothingItem,
+  createItem,
+  getItems,
+  deleteItem,
+  likeItem
 };
