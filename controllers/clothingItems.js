@@ -26,10 +26,10 @@ const createItem = (req, res) => {
 
 // return all clothing items
 const getItems = (req, res) => {
-  ClothingItem.find({})
+  return ClothingItem.find({})
     .then((items) => res.status(200).send(items))
     .catch((e) => {
-      res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
+      return res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
     });
 };
 
@@ -50,18 +50,18 @@ const updateItem = (req, res) => {
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
-  ClothingItem.findByIdAndDelete(itemId)
+  return ClothingItem.findByIdAndDelete(itemId)
     .then((item) => {
       if (!item) {
         return res.status(NOT_FOUND).send({ message: "Item not found" });
       }
-      res.status(200).send({ message: "Item deleted" });
+      return res.status(200).send({ message: "Item deleted" });
     })
     .catch((err) => {
       if (err.kind === "ObjectId") {
-        res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
+        return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
       } else {
-        res.status(SERVER_ERROR).send({ message: "Error deleting item" });
+        return res.status(SERVER_ERROR).send({ message: "Error deleting item" });
       }
     });
 };
@@ -76,7 +76,7 @@ const likeItem = (req, res) => {
     return res.status(400).send({ message: "Invalid item ID" });
   }
 
-  ClothingItem.findByIdAndUpdate(
+  return ClothingItem.findByIdAndUpdate(
     itemId,
     { $addToSet: { likes: userId } }, // Add userId to likes if not already present
     { new: true }
@@ -85,7 +85,7 @@ const likeItem = (req, res) => {
       if (!item) {
         return res.status(404).send({ message: "Item not found" });
       }
-      res.status(200).send({ message: "Item liked", data: item });
+      return res.status(200).send({ message: "Item liked", data: item });
     })
     .catch((err) => {
       console.error(err);
