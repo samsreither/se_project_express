@@ -38,11 +38,13 @@ const updateItem = (req, res) => {
   const { itemId } = req.params;
   const { imageUrl } = req.body;
 
-  ClothingItem.findByIdAndUpdate(itemId, {set: {imageUrl}}).orFail().then((item) => res.status(200).send({data:item}))
-  .catch((e) => {
-    res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
-  })
-}
+  ClothingItem.findByIdAndUpdate(itemId, { set: { imageUrl } })
+    .orFail()
+    .then((item) => res.status(200).send({ data: item }))
+    .catch((e) => {
+      res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
+    });
+};
 
 // delete an item by _id
 const deleteItem = (req, res) => {
@@ -64,52 +66,56 @@ const deleteItem = (req, res) => {
     });
 };
 
-// like an item
+// like an item by _id
 const likeItem = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
 
-  // check if 'userId' is present
-  if (!userId) {
-    console.error("Error: User not authenticated.");
-    return res.status(BAD_REQUEST).send({ message: "User not authenticated" });
-  }
-
-  // check if itemId is a valid ObjectId
+  // Validate itemId
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
-    return res.status(BAD_REQUEST).send({ message: "Invalid ID" }); // Handle invalid ID format
+    return res.status(400).send({ message: "Invalid item ID" });
   }
 
-  ClothingItem.findById(itemId)
+  ClothingItem.findByIdAndUpdate(
+    itemId,
+    { $addToSet: { likes: userId } }, // Add userId to likes if not already present
+    { new: true }
+  )
     .then((item) => {
       if (!item) {
-        return res.status(BAD_REQUEST).send({ message: "Not found" });
+        return res.status(404).send({ message: "Item not found" });
       }
-
-      // check if user has already liked the item
-      const hasLiked = item.likes.includes(userId);
-
-      if (hasLiked) {
-        // If already liked, remove the user from likes
-        item.likes = item.likes.filter((like) => !like.equals(userId));
-        return item
-          .save()
-          .then(() =>
-            res.status(200).send({ message: "Like removed", data: item })
-          );
-      } else {
-        // If not liked, add the user to likes
-        item.likes.push(userId);
-        return item
-          .save()
-          .then(() =>
-            res.status(200).send({ message: "Item liked", data: item })
-          );
-      }
+      res.status(200).send({ message: "Item liked", data: item });
     })
     .catch((err) => {
       console.error(err);
-      res.status(SERVER_ERROR).send({ message: "Error liking item" });
+      res.status(500).send({ message: "Error liking item" });
+    });
+}
+
+const dislikeItem = (req, res) => {
+  const { itemId } = req.params;
+  const userId = req.user._id;
+
+  // Validate itemId
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    return res.status(400).send({ message: "Invalid item ID" });
+  }
+
+  ClothingItem.findByIdAndUpdate(
+    itemId,
+    { $pull: { likes: userId } }, // Remove userId from likes
+    { new: true }
+  )
+    .then((item) => {
+      if (!item) {
+        return res.status(404).send({ message: "Item not found" });
+      }
+      res.status(200).send({ message: "Like removed", data: item });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send({ message: "Error unliking item" });
     });
 };
 
@@ -118,5 +124,6 @@ module.exports = {
   getItems,
   updateItem,
   deleteItem,
-  likeItem
+  likeItem,
+  dislikeItem
 };
