@@ -43,7 +43,8 @@ const updateItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(itemId, { set: { imageUrl } })
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
-    .catch((e) => {
+    .catch((err) => {
+      console.error(err);
       res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
     });
 };
