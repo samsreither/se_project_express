@@ -11,9 +11,8 @@ router.get('/', getItems);
 
 // update
 
-
 // like an item
-router.patch('/:idemId/like', likeItem);
+router.put('/:idemId/likes', likeItem);
 
 // delete
 router.delete('/:itemId', deleteItem);

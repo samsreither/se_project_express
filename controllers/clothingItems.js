@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const ClothingItem = require("../models/clothingItem");
 const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR } = require("../utils/errors");
 
@@ -56,6 +57,12 @@ const deleteItem = (req, res) => {
 const likeItem = (req, res) => {
   const { itemId } = req.params;
   const userId = req.user._id;
+
+  // check if 'userId' is present
+  if (!userId) {
+    console.error("Error: User not authenticated.");
+    return res.status(BAD_REQUEST).send({ message: "User not authenticated" });
+  }
 
   // check if itemId is a valid ObjectId
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
