@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const ClothingItem = require("../models/clothingItem");
+const ClothingItem = require("../models/ClothingItem");
 const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR } = require("../utils/errors");
 
 // create clothing item
@@ -32,6 +32,17 @@ const getItems = (req, res) => {
       res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
     });
 };
+
+// update items
+const updateItem = (req, res) => {
+  const { itemId } = req.params;
+  const { imageUrl } = req.body;
+
+  ClothingItem.findByIdAndUpdate(itemId, {set: {imageUrl}}).orFail().then((item) => res.status(200).send({data:item}))
+  .catch((e) => {
+    res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
+  })
+}
 
 // delete an item by _id
 const deleteItem = (req, res) => {
@@ -66,13 +77,13 @@ const likeItem = (req, res) => {
 
   // check if itemId is a valid ObjectId
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
-    return res.status(BAD_REQUEST).send({ message: "Invalid item ID" }); // Handle invalid ID format
+    return res.status(BAD_REQUEST).send({ message: "Invalid ID" }); // Handle invalid ID format
   }
 
   ClothingItem.findById(itemId)
     .then((item) => {
       if (!item) {
-        return res.status(NOT_FOUND).send({ message: "Item not found" });
+        return res.status(BAD_REQUEST).send({ message: "Not found" });
       }
 
       // check if user has already liked the item
@@ -105,6 +116,7 @@ const likeItem = (req, res) => {
 module.exports = {
   createItem,
   getItems,
+  updateItem,
   deleteItem,
   likeItem
 };
