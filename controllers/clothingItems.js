@@ -76,7 +76,7 @@ const likeItem = (req, res) => {
 
   // Validate itemId
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
-    return res.status(400).send({ message: "Invalid item ID" });
+    return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
   }
 
   return ClothingItem.findByIdAndUpdate(
@@ -86,13 +86,13 @@ const likeItem = (req, res) => {
   )
     .then((item) => {
       if (!item) {
-        return res.status(404).send({ message: "Item not found" });
+        return res.status(NOT_FOUND).send({ message: "Item not found" });
       }
       return res.status(200).send({ message: "Item liked", data: item });
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).send({ message: "An error has occurred on the server" });
+      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
     });
 }
 
@@ -102,7 +102,7 @@ const dislikeItem = (req, res) => {
 
   // Validate itemId
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
-    return res.status(400).send({ message: "Invalid item ID" });
+    return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
   }
 
   return ClothingItem.findByIdAndUpdate(
@@ -112,13 +112,13 @@ const dislikeItem = (req, res) => {
   )
     .then((item) => {
       if (!item) {
-        return res.status(404).send({ message: "Item not found" });
+        return res.status(NOT_FOUND).send({ message: "Item not found" });
       }
       return res.status(200).send({ message: "Like removed", data: item });
     })
     .catch((err) => {
       console.error(err);
-      return res.status(500).send({ message: "An error has occurred on the server" });
+      return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
     });
 };
 
