@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const User = require('../models/user');
+const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR } = require("../utils/errors");
+
 
 // Get /users
 const getUsers = (req, res) => {
@@ -7,17 +9,13 @@ const getUsers = (req, res) => {
     .then((users) => res.send(users))
     .catch((err) => {
       console.error(err);
-      res.status(500).send({ message: err.message })
+      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" })
     });
 };
 
 // POST /users
 const createUser = (req, res) => {
   const { name, avatar } = req.body;
-
-  // if (!name || name.length <2) {
-  //   return res.status(400).send({message: "Name must be at least 2 characters long"})
-  // }
 
   User.create({ name, avatar })
   .then((user) => res.status(201).send(user))
@@ -26,7 +24,7 @@ const createUser = (req, res) => {
     if (err.name === "ValidationError") {
       res.status(400).send({ message: err.message })
     } else {
-      res.status(500).send({ message: err.message })
+      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" })
     }
   });
 }
@@ -36,19 +34,19 @@ const getUser = (req, res) => {
   const { userId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
-    return res.status(400).send({message: "Invalid user ID format"});
+    return res.status(BAD_REQUEST).send({message: "Invalid user ID format"});
   }
 
   return User.findById(userId)
   .then((user) => {
     if (!user) {
-      return res.status(404).send({message: "User not found." });
+      return res.status(NOT_FOUND).send({message: "User not found." });
     }
     return res.status(200).send(user);
   })
   .catch((err) => {
     console.error(err);
-    return res.status(500).send({ message: err.message });
+    return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
   });
 }
 

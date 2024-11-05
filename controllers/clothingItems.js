@@ -19,7 +19,8 @@ const createItem = (req, res) => {
       if (err.name === "ValidationError") {
         res.status(BAD_REQUEST).send({ message: err.message });
       } else {
-        res.status(SERVER_ERROR).send({ message: err.message });
+        console.error(err);
+        res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
       }
     });
 };
@@ -29,7 +30,8 @@ const getItems = (req, res) => {
   ClothingItem.find({})
     .then((items) => res.status(200).send(items))
     .catch((e) => {
-      res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
+      console.error(e);
+      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
     });
 };
 
@@ -42,7 +44,7 @@ const updateItem = (req, res) => {
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
     .catch((e) => {
-      res.status(SERVER_ERROR).send({ message: "Error from getItems", e });
+      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
     });
 };
 
@@ -61,7 +63,7 @@ const deleteItem = (req, res) => {
       if (err.kind === "ObjectId") {
         return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
       }
-      return res.status(SERVER_ERROR).send({ message: "Error deleting item" });
+      return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
 
     });
 };
@@ -89,7 +91,7 @@ const likeItem = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).send({ message: "Error liking item" });
+      res.status(500).send({ message: "An error has occurred on the server" });
     });
 }
 
@@ -115,7 +117,7 @@ const dislikeItem = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      return res.status(500).send({ message: "Error unliking item" });
+      return res.status(500).send({ message: "An error has occurred on the server" });
     });
 };
 
