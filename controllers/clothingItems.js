@@ -111,11 +111,11 @@ const dislikeItem = (req, res) => {
       if (!item) {
         return res.status(404).send({ message: "Item not found" });
       }
-      res.status(200).send({ message: "Like removed", data: item });
+      return res.status(200).send({ message: "Like removed", data: item });
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).send({ message: "Error unliking item" });
+      return res.status(500).send({ message: "Error unliking item" });
     });
 };
 
