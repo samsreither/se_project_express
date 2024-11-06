@@ -53,12 +53,24 @@ const updateItem = (req, res) => {
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
-  return ClothingItem.findByIdAndDelete(itemId)
+  return ClothingItem.findById(itemId)
     .then((item) => {
+      // if item doesn't exist, return 404 error
       if (!item) {
         return res.status(NOT_FOUND).send({ message: "Item not found" });
       }
-      return res.status(200).send({ message: "Item deleted" });
+
+      // check if logged-in user is the owner of the item
+      if (item.owner.toString() !== req.user._id.toString()) {
+        // if user isn't the owner, return a 403 forbidden error
+        return res.status(403).send({ message: "You do not have permission to delete this item"});
+      }
+
+      // delete the item if user is the owner
+      return item.remove()
+        .then(() => {
+          return res.status(200).send({ message: "Item deleted successfully" });
+        });
     })
     .catch((err) => {
       if (err.kind === "ObjectId") {

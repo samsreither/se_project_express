@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const mainRouter = require("./routes/index");
 
@@ -15,14 +16,7 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// middleware to mock user ID to every request
-app.use((req, res, next) => {
-  req.user = {
-    _id: '5d8b8592978f8bd833ca8133', // replace this with your test user's _id
-  };
-  next();
-});
-
+app.use(cors());
 app.use(express.json());
 app.use("/", mainRouter);
 
