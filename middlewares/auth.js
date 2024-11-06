@@ -19,7 +19,7 @@ const auth = (req, res, next) => {
     next(); // move to next middleware or route handler
   } catch (err) {
     // send 401 unauthorized response if verification fails
-    res.status(401).send({ message: 'Invalid token' });
+    return res.status(401).send({ message: 'Invalid token' });
   }
 };
 
