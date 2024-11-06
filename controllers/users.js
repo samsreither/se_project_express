@@ -43,15 +43,17 @@ const createUser = (req, res) => {
         email,
         password: hashedPassword,
       })
-    )
+)
     .then((user) => {
       // convert user document to a plain object and remove password field
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
+
       return res.status(201).send(userWithoutPassword);
     })
     .catch((err) => {
       console.error(err);
+
       if (err.code === 11000) {
         return res.status(409).send({ message: "Email already exists"});
       }
@@ -94,7 +96,7 @@ const login = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      res.status(SERVER_ERROR).send({ message: 'Server error' });
+      return res.status(SERVER_ERROR).send({ message: 'Server error' });
     });
 };
 
