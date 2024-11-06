@@ -68,9 +68,8 @@ const deleteItem = (req, res) => {
 
       // delete the item if user is the owner
       return item.remove()
-        .then(() => {
-          return res.status(200).send({ message: "Item deleted successfully" });
-        });
+        .then(() => res.status(200).send({ message: "Item deleted successfully" })
+        );
     })
     .catch((err) => {
       if (err.kind === "ObjectId") {

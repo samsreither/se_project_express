@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require('bcryptjs');
-const User = require('../models/user');
 const jwt = require("jsonwebtoken");
+const User = require('../models/user');
 const { JWT_SECRET } = require('../utils/config')
 const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR } = require("../utils/errors");
 
@@ -27,7 +27,7 @@ const createUser = (req, res) => {
   }
 
   // check if email already exists
-  User.findOne({ email })
+  return User.findOne({ email })
     .then((existingUser) => {
       if (existingUser) {
         // if email already exists, return a 409 conflict
@@ -36,14 +36,14 @@ const createUser = (req, res) => {
       // hash the password
       return bcrypt.hash(password, 10)
     })
-    .then((hashedPassword) => {
-      return User.create({
+    .then((hashedPassword) =>
+      User.create({
         name,
         avatar,
         email,
         password: hashedPassword,
-      });
-    })
+      })
+    )
     .then((user) => {
       // convert user document to a plain object and remove password field
       const userWithoutPassword = user.toObject();
@@ -52,13 +52,13 @@ const createUser = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      if (err.code == 11000) {
+      if (err.code === 11000) {
         return res.status(409).send({ message: "Email already exists"});
-      } else if (err.name === "ValidationError") {
-        return res.status(BAD_REQUEST).send({ message: err.message })
-      } else {
-        return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
       }
+      if (err.name === "ValidationError") {
+        return res.status(BAD_REQUEST).send({ message: err.message })
+      }
+      return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
       });
     };
 
@@ -70,7 +70,7 @@ const login = (req, res) => {
   }
 
   // verify email and password
-  User.findOne({ email }).select('+password')
+  return User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return res.status(401).send({ message: 'Incorrect email or password' });
@@ -93,6 +93,7 @@ const login = (req, res) => {
         });
     })
     .catch((err) => {
+      console.error(err);
       res.status(SERVER_ERROR).send({ message: 'Server error' });
     });
 };
@@ -100,7 +101,7 @@ const login = (req, res) => {
 const getCurrentUser = (req, res) => {
   const userId = req.user._id; // get user ID from token payload
 
-  User.findById(userId)
+  return User.findById(userId)
     .then((user) => {
       if (!user) {
         return res.status(NOT_FOUND).send({ message: 'User not found' });
@@ -123,7 +124,7 @@ const updateProfile = (req, res) => {
   const userId = req.user._id;
 
   // find the user by ID and update name and avatar
-  User.findByIdAndUpdate(
+  return User.findByIdAndUpdate(
     userId,
     { name, avatar },
     { new: true, runValidators: true } // ensure validation is run and return updated document
