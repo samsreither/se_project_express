@@ -110,11 +110,11 @@ const getCurrentUser = (req, res) => {
       // return user data without password
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
-      res.status(200).send(userWithoutPassword);
+      return res.status(200).send(userWithoutPassword);
     })
     .catch((err) => {
       console.error(err);
-      res.status(SERVER_ERROR).send({ message: 'Server error' });
+      return res.status(SERVER_ERROR).send({ message: 'Server error' });
     })
 }
 
@@ -136,7 +136,7 @@ const updateProfile = (req, res) => {
       // remove password before returning updated user
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
-      res.status(200).send(userWithoutPassword);
+      return res.status(200).send(userWithoutPassword);
     })
     .catch((err) => {
       console.error(err);
