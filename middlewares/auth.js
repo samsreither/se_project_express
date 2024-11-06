@@ -16,7 +16,7 @@ const auth = (req, res, next) => {
     // verify the token and attach payload to request object
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload; // attach payload to req.user
-    next(); // move to next middleware or route handler
+    return next(); // move to next middleware or route handler
   } catch (err) {
     // send 401 unauthorized response if verification fails
     return res.status(401).send({ message: 'Invalid token' });

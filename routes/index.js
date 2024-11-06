@@ -11,7 +11,7 @@ router.post('/signin', login);
 
 router.get('/items', clothingItems); // GET /items does not require authorization
 
-router.use(auth); //all routes below require authorization
+router.use(auth); // all routes below require authorization
 
 // routes for items and users
 router.use('/items', clothingItems); // POST/PUT/DELETE routes are protected
