@@ -35,7 +35,6 @@ const createUser = (req, res) => {
       }
       // hash the password
       return bcrypt.hash(password, 10)
-    })
     .then((hashedPassword) =>
       User.create({
         name,
@@ -62,6 +61,7 @@ const createUser = (req, res) => {
       }
       return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
       });
+    })
     };
 
 const login = (req, res) => {
