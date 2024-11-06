@@ -30,7 +30,7 @@ const createUser = (req, res) => {
   return User.findOne({ email })
     .then((existingUser) => {
       if (existingUser) {
-        // if email already exists, return a 409 conflict
+        // if email already exists, return a 409 conflict here
         return res.status(409).send({ message: 'Email already in use'});
       }
       // hash the password
