@@ -1,10 +1,7 @@
-const mongoose = require("mongoose");
-const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const User = require('../models/user');
 const { JWT_SECRET } = require('../utils/config')
 const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR, OK_RESPONSE, OK_CREATE, CONFLICT_ERROR, UNAUTHORIZED } = require("../utils/errors");
-
 
 // POST /users
 const createUser = (req, res) => {
