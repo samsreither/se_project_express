@@ -4,12 +4,13 @@ const users = require('./users');
 const { createUser, login } = require('../controllers/users');
 const { NOT_FOUND } = require("../utils/errors");
 const auth = require('../middlewares/auth');
+const { getItems } = require('../controllers/clothingItems');
 
 // routes for signing up and signing in
 router.post('/signup', createUser);
 router.post('/signin', login);
 
-router.get('/items', clothingItems); // GET /items does not require authorization
+router.get('/items', getItems); // GET /items does not require authorization
 
 router.use(auth); // all routes below require authorization
 

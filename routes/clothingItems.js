@@ -6,9 +6,6 @@ const { createItem, getItems, deleteItem, likeItem, dislikeItem } = require('../
 // create
 router.post('/', createItem);
 
-// read
-router.get('/', getItems);
-
 // like an item
 router.put('/:itemId/likes', likeItem);
 

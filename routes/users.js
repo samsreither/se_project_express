@@ -3,7 +3,7 @@ const { getCurrentUser, updateProfile } = require('../controllers/users');
 const auth = require('../middlewares/auth');
 
 // route to get current user's data (requires authorization)
-router.get('/me',auth,getCurrentUser);
-router.patch('/me', auth, updateProfile);
+router.get('/me', getCurrentUser);
+router.patch('/me', updateProfile);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const ClothingItem = require("../models/clothingItem");
-const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR } = require("../utils/errors");
+const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR, NO_PERMISSION, OK_RESPONSE, OK_CREATE } = require("../utils/errors");
 
 // create clothing item
 const createItem = (req, res) => {
@@ -12,7 +12,7 @@ const createItem = (req, res) => {
   ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => {
       console.log(item);
-      res.status(201).send({ data: item });
+      res.status(OK_CREATE).send({ data: item });
     })
     .catch((err) => {
       console.error(err);
@@ -28,7 +28,7 @@ const createItem = (req, res) => {
 // return all clothing items
 const getItems = (req, res) => {
   ClothingItem.find({})
-    .then((items) => res.status(200).send(items))
+    .then((items) => res.status(OK_RESPONSE).send(items))
     .catch((e) => {
       console.error(e);
       res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
@@ -42,7 +42,7 @@ const updateItem = (req, res) => {
 
   ClothingItem.findByIdAndUpdate(itemId, { set: { imageUrl } })
     .orFail()
-    .then((item) => res.status(200).send({ data: item }))
+    .then((item) => res.status(OK_RESPONSE).send({ data: item }))
     .catch((err) => {
       console.error(err);
       res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
@@ -63,12 +63,12 @@ const deleteItem = (req, res) => {
       // check if logged-in user is the owner of the item
       if (item.owner.toString() !== req.user._id.toString()) {
         // if user isn't the owner, return a 403 forbidden error
-        return res.status(403).send({ message: "You do not have permission to delete this item"});
+        return res.status(NO_PERMISSION).send({ message: "You do not have permission to delete this item"});
       }
 
       // delete the item if user is the owner
       return item.remove()
-        .then(() => res.status(200).send({ message: "Item deleted successfully" })
+        .then(() => res.status(OK_RESPONSE).send({ message: "Item deleted successfully" })
         );
     })
     .catch((err) => {
@@ -99,7 +99,7 @@ const likeItem = (req, res) => {
       if (!item) {
         return res.status(NOT_FOUND).send({ message: "Item not found" });
       }
-      return res.status(200).send({ message: "Item liked", data: item });
+      return res.status(OK_RESPONSE).send({ message: "Item liked", data: item });
     })
     .catch((err) => {
       console.error(err);
@@ -125,7 +125,7 @@ const dislikeItem = (req, res) => {
       if (!item) {
         return res.status(NOT_FOUND).send({ message: "Item not found" });
       }
-      return res.status(200).send({ message: "Like removed", data: item });
+      return res.status(OK_RESPONSE).send({ message: "Like removed", data: item });
     })
     .catch((err) => {
       console.error(err);
