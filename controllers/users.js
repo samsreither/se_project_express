@@ -111,6 +111,7 @@ const getCurrentUser = (req, res) => {
 // update current user's profile
 const updateProfile = (req, res) => {
   const { name, avatar } = req.body;
+  console.log('req.body',req.body);
   const userId = req.user._id;
 
   // find the user by ID and update name and avatar
