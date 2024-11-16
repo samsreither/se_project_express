@@ -1,93 +1,97 @@
 const mongoose = require("mongoose");
 const ClothingItem = require("../models/clothingItem");
-const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR, NO_PERMISSION, OK_RESPONSE, OK_CREATE } = require("../utils/errors");
+const {
+  BAD_REQUEST,
+  NOT_FOUND,
+  SERVER_ERROR,
+  NO_PERMISSION,
+  OK_RESPONSE,
+  OK_CREATE,
+  BadRequestError,
+  NotFoundError,
+  ForbiddenError,
+} = require("../utils/errors");
 
 // create clothing item
-const createItem = (req, res) => {
-  console.log(req);
-  console.log(req.body);
-
+const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
 
   ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => {
-      console.log(item);
       res.status(OK_CREATE).send({ data: item });
     })
     .catch((err) => {
-      console.error(err);
       if (err.name === "ValidationError") {
-        res.status(BAD_REQUEST).send({ message: err.message });
+        next(new BadRequestError("Invalid data provided for creating an item"));
       } else {
-        console.error(err);
-        res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
+        next(err); // pass unexpected errors to error handler
       }
     });
 };
 
 // return all clothing items
-const getItems = (req, res) => {
+const getItems = (req, res, next) => {
   ClothingItem.find({})
     .then((items) => res.status(OK_RESPONSE).send(items))
-    .catch((e) => {
-      console.error(e);
-      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
-    });
+    .catch(next); // pass errors to error handler
 };
 
 // update items
-const updateItem = (req, res) => {
+const updateItem = (req, res, next) => {
   const { itemId } = req.params;
   const { imageUrl } = req.body;
 
-  ClothingItem.findByIdAndUpdate(itemId, { set: { imageUrl } })
-    .orFail()
+  ClothingItem.findByIdAndUpdate(itemId, { $set: { imageUrl } })
+    .orFail(() => {
+      throw new NotFoundError("Item not found");
+    })
     .then((item) => res.status(OK_RESPONSE).send({ data: item }))
     .catch((err) => {
-      console.error(err);
-      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
+      if (err.name === "ValidationError") {
+        next(new BadRequestError("Invalid data provided for updating an item"));
+      } else {
+        next(err); // pass unexpected errors to the error handler
+      }
     });
 };
 
 // delete an item by _id
-const deleteItem = (req, res) => {
+const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
 
   return ClothingItem.findById(itemId)
     .then((item) => {
       // if item doesn't exist, return 404 error
       if (!item) {
-        return res.status(NOT_FOUND).send({ message: "Item not found" });
+        throw new NotFoundError("Item not found");
       }
 
       // check if logged-in user is the owner of the item
       if (item.owner.toString() !== req.user._id.toString()) {
         // if user isn't the owner, return a 403 forbidden error
-        return res.status(NO_PERMISSION).send({ message: "You do not have permission to delete this item"});
+        throw new ForbiddenError(
+          "You do not have permission to delete this item"
+        );
       }
 
       // delete the item if user is the owner
-      return item.remove()
-        .then(() => res.status(OK_RESPONSE).send({ message: "Item deleted successfully" })
+      return item
+        .remove()
+        .then(() =>
+          res.status(OK_RESPONSE).send({ message: "Item deleted successfully" })
         );
     })
-    .catch((err) => {
-      if (err.kind === "ObjectId") {
-        return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
-      }
-      return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
-
-    });
+    .catch(next);
 };
 
 // like an item by _id
-const likeItem = (req, res) => {
+const likeItem = (req, res, next) => {
   const { itemId } = req.params;
   const userId = req.user._id;
 
   // Validate itemId
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
-    return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
+    return next(new BadRequestError("Invalid item ID"));
   }
 
   return ClothingItem.findByIdAndUpdate(
@@ -95,25 +99,22 @@ const likeItem = (req, res) => {
     { $addToSet: { likes: userId } }, // Add userId to likes if not already present
     { new: true }
   )
-    .then((item) => {
-      if (!item) {
-        return res.status(NOT_FOUND).send({ message: "Item not found" });
-      }
-      return res.status(OK_RESPONSE).send({ message: "Item liked", data: item });
+    .orFail(() => {
+      throw new NotFoundError("Item not found");
     })
-    .catch((err) => {
-      console.error(err);
-      res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
-    });
-}
+    .then((item) =>
+      res.status(OK_RESPONSE).send({ message: "Item liked", data: item })
+    )
+    .catch(next);
+};
 
-const dislikeItem = (req, res) => {
+const dislikeItem = (req, res, next) => {
   const { itemId } = req.params;
   const userId = req.user._id;
 
   // Validate itemId
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
-    return res.status(BAD_REQUEST).send({ message: "Invalid item ID" });
+    return next(new BadRequestError("Invalid item ID"));
   }
 
   return ClothingItem.findByIdAndUpdate(
@@ -121,16 +122,13 @@ const dislikeItem = (req, res) => {
     { $pull: { likes: userId } }, // Remove userId from likes
     { new: true }
   )
-    .then((item) => {
-      if (!item) {
-        return res.status(NOT_FOUND).send({ message: "Item not found" });
-      }
-      return res.status(OK_RESPONSE).send({ message: "Like removed", data: item });
+    .orFail(() => {
+      throw new NotFoundError("Item not found");
     })
-    .catch((err) => {
-      console.error(err);
-      return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
-    });
+    .then((item) => {
+      res.status(OK_RESPONSE).send({ message: "Like removed", data: item });
+    })
+    .catch(next);
 };
 
 module.exports = {
@@ -139,5 +137,5 @@ module.exports = {
   updateItem,
   deleteItem,
   likeItem,
-  dislikeItem
+  dislikeItem,
 };

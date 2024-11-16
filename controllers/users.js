@@ -2,16 +2,15 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const { JWT_SECRET } = require('../utils/config')
-const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR, OK_RESPONSE, OK_CREATE, CONFLICT_ERROR, UNAUTHORIZED } = require("../utils/errors");
+const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR, OK_RESPONSE, OK_CREATE, CONFLICT_ERROR, UNAUTHORIZED, BadRequestError, ConflictError, UnauthorizedError, NotFoundError } = require("../utils/errors");
 
 // POST /users
 const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
-  console.log("Request body:", req.body);
 
   // check if all required fields are provided
   if (!email || !password || !name) {
-    return res.status(BAD_REQUEST).send({ message: "Missing required fields: email, password, or name"});
+    return next(new BadRequestError("Missing required fields: email, password, or name"));
   }
 
   // check if email already exists
@@ -19,18 +18,19 @@ const createUser = (req, res) => {
     .then((existingUser) => {
       if (existingUser) {
         // if email already exists, return a 409 conflict here
-        return res.status(CONFLICT_ERROR).send({ message: 'Email already in use'});
+        throw new ConflictError("Email already in use");
       }
       // hash the password
-      return bcrypt.hash(password, 10)
-    .then((hashedPassword) =>
-      User.create({
+      return bcrypt.hash(password, 10);
+    })
+    .then((hashedPassword) => {
+      return User.create({
         name,
         avatar,
         email,
         password: hashedPassword,
-      })
-)
+      });
+    })
     .then((user) => {
       // convert user document to a plain object and remove password field
       const userWithoutPassword = user.toObject();
@@ -40,17 +40,9 @@ const createUser = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-
-      if (err.code === 11000) {
-        return res.status(CONFLICT_ERROR).send({ message: "Email already exists"});
-      }
-      if (err.name === "ValidationError") {
-        return res.status(BAD_REQUEST).send({ message: err.message })
-      }
-      return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server" });
-      });
-    })
-    };
+      next(err);
+    });
+  };
 
 const login = (req, res) => {
   const { email, password} = req.body;
@@ -63,14 +55,14 @@ const login = (req, res) => {
   return User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return res.status(UNAUTHORIZED).send({ message: 'Incorrect email or password' });
+        throw new UnauthorizedError("Incorrect email or password");
       }
 
       // compare password with stored hash
       return bcrypt.compare(password, user.password)
         .then((isMatch) => {
           if (!isMatch) {
-            return res.status(UNAUTHORIZED).send({ message: 'Incorrect email or password' });
+            throw new UnauthorizedError("Incorrect email or password")
           }
 
           // generate a JWT token
@@ -82,10 +74,7 @@ const login = (req, res) => {
           return res.send({ token });
         });
     })
-    .catch((err) => {
-      console.error(err);
-      return res.status(SERVER_ERROR).send({ message: 'Server error' });
-    });
+    .catch(next);
 };
 
 const getCurrentUser = (req, res) => {
@@ -94,7 +83,7 @@ const getCurrentUser = (req, res) => {
   return User.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(NOT_FOUND).send({ message: 'User not found' });
+        throw new NotFoundError("User not found");
       }
 
       // return user data without password
@@ -102,10 +91,7 @@ const getCurrentUser = (req, res) => {
       delete userWithoutPassword.password;
       return res.status(OK_RESPONSE).send(userWithoutPassword);
     })
-    .catch((err) => {
-      console.error(err);
-      return res.status(SERVER_ERROR).send({ message: 'Server error' });
-    })
+    .catch(next);
 }
 
 // update current user's profile
@@ -122,21 +108,14 @@ const updateProfile = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        return res.status(NOT_FOUND).send({ message: 'User not found' })
+        throw new NotFoundError("User not found");
       }
       // remove password before returning updated user
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
       return res.status(OK_RESPONSE).send(userWithoutPassword);
     })
-    .catch((err) => {
-      console.error(err);
-      if (err.name === "ValidationError") {
-        res.status(BAD_REQUEST).send({ message: 'Invalid data' });
-      } else {
-        res.status(SERVER_ERROR).send({ message: 'Server error'});
-      }
-    });
+    .catch(next);
 }
 
 module.exports = {
