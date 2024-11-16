@@ -2,9 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require('dotenv').config();
-
-const mainRouter = require("./routes/index");
 const { errors } = require('celebrate');
+const mainRouter = require("./routes/index");
 const { requestLogger, errorLogger } = require("./middlewares/logger");
 const errorHandler = require("./middlewares/error-handler");
 
@@ -43,5 +42,4 @@ app.use(errorHandler);
 // start the server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log("This is working")
 });

@@ -1,16 +1,12 @@
 const mongoose = require("mongoose");
 const ClothingItem = require("../models/clothingItem");
 const {
-  BAD_REQUEST,
-  NOT_FOUND,
-  SERVER_ERROR,
-  NO_PERMISSION,
   OK_RESPONSE,
   OK_CREATE,
-  BadRequestError,
-  NotFoundError,
-  ForbiddenError,
 } = require("../utils/errors");
+const BadRequestError = require('../utils/BadRequestError');
+const NotFoundError = require('../utils/NotFoundError');
+const ForbiddenError = require('../utils/ForbiddenError');
 
 // create clothing item
 const createItem = (req, res, next) => {

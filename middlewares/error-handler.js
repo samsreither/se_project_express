@@ -1,5 +1,5 @@
 // handle errors in a centralized way
-function errorHandler(err, req, res, next) {
+function errorHandler(err, res) {
   console.error(err);
 
   const statusCode = err.statusCode || 500; // default code if no status code specified

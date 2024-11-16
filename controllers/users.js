@@ -2,10 +2,13 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const { JWT_SECRET } = require('../utils/config')
-const { BAD_REQUEST, NOT_FOUND, SERVER_ERROR, OK_RESPONSE, OK_CREATE, CONFLICT_ERROR, UNAUTHORIZED, BadRequestError, ConflictError, UnauthorizedError, NotFoundError } = require("../utils/errors");
+const { OK_RESPONSE, OK_CREATE, UnauthorizedError } = require("../utils/errors");
+const BadRequestError = require('../utils/BadRequestError');
+const NotFoundError = require('../utils/NotFoundError');
+const ConflictError = require('../utils/ConflictError');
 
 // POST /users
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
   // check if all required fields are provided
@@ -23,14 +26,12 @@ const createUser = (req, res) => {
       // hash the password
       return bcrypt.hash(password, 10);
     })
-    .then((hashedPassword) => {
-      return User.create({
+    .then((hashedPassword) => User.create({
         name,
         avatar,
         email,
         password: hashedPassword,
-      });
-    })
+      }))
     .then((user) => {
       // convert user document to a plain object and remove password field
       const userWithoutPassword = user.toObject();
@@ -44,11 +45,11 @@ const createUser = (req, res) => {
     });
   };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password} = req.body;
 
   if (!email || !password) {
-    return res.status(BAD_REQUEST).send({ message: "Email and password are required"});
+    throw new UnauthorizedError("Email and password are required");
   }
 
   // verify email and password
@@ -77,7 +78,7 @@ const login = (req, res) => {
     .catch(next);
 };
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res, next) => {
   const userId = req.user._id; // get user ID from token payload
 
   return User.findById(userId)
@@ -95,9 +96,8 @@ const getCurrentUser = (req, res) => {
 }
 
 // update current user's profile
-const updateProfile = (req, res) => {
+const updateProfile = (req, res, next) => {
   const { name, avatar } = req.body;
-  console.log('req.body',req.body);
   const userId = req.user._id;
 
   // find the user by ID and update name and avatar
