@@ -21,7 +21,10 @@ module.exports.validateCardBody = celebrate({
       "string.empty": 'The "imageUrl" field must be filled in',
       "string.uri": 'the "imageUrl" field must be a valid url',
     }),
-
+    weather: Joi.string().valid('hot', 'warm', 'cold').required().messages({
+      "string.empty": 'The "weather" field must be filled in',
+      "any.only": 'The "weather" field must be one of: hot, warm, cold',
+    }),
   }),
 });
 
@@ -42,10 +45,6 @@ module.exports.validateUserBody = celebrate({
     }),
     password: Joi.string().required().messages({
       'string.empty': 'The "password" field must be filled in',
-    }),
-    weather: Joi.string().valid('hot', 'warm', 'cold').required().messages({
-      "string.empty": 'The "weather" field must be filled in',
-      "any.only": 'The "weather" field must be one of: hot, warm, cold',
     }),
   }),
 });
@@ -78,13 +77,9 @@ module.exports.validateLoginBody = celebrate({
   }),
 });
 
-// validate ID for user and clothing item
+// validate ID
 module.exports.validateId = celebrate({
   params: Joi.object().keys({
-    id: Joi.string().length(24).hex().required().messages({
-      'string.length': 'ID must be 24 characters long',
-      'string.hex': 'ID must be a valid hexadecimal value',
-    }),
     itemId: Joi.string().length(24).hex().required().messages({
       'string.length': 'The "itemId" field must be a 24-character hexadecimal string',
       'string.empty': 'The "itemId" field must be filled in',
