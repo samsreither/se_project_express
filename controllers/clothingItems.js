@@ -32,25 +32,6 @@ const getItems = (req, res, next) => {
     .catch(next); // pass errors to error handler
 };
 
-// update items
-const updateItem = (req, res, next) => {
-  const { itemId } = req.params;
-  const { imageUrl } = req.body;
-
-  ClothingItem.findByIdAndUpdate(itemId, { $set: { imageUrl } })
-    .orFail(() => {
-      throw new NotFoundError("Item not found");
-    })
-    .then((item) => res.status(OK_RESPONSE).send({ data: item }))
-    .catch((err) => {
-      if (err.name === "ValidationError") {
-        next(new BadRequestError("Invalid data provided for updating an item"));
-      } else {
-        next(err); // pass unexpected errors to the error handler
-      }
-    });
-};
-
 // delete an item by _id
 const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
@@ -130,7 +111,6 @@ const dislikeItem = (req, res, next) => {
 module.exports = {
   createItem,
   getItems,
-  updateItem,
   deleteItem,
   likeItem,
   dislikeItem,

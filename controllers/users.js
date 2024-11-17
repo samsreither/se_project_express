@@ -2,10 +2,11 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const { JWT_SECRET } = require('../utils/config')
-const { OK_RESPONSE, OK_CREATE, UnauthorizedError } = require("../utils/errors");
+const { OK_RESPONSE, OK_CREATE } = require("../utils/errors");
 const BadRequestError = require('../utils/BadRequestError');
 const NotFoundError = require('../utils/NotFoundError');
 const ConflictError = require('../utils/ConflictError');
+const UnauthorizedError = require('../utils/UnauthorizedError');
 
 // POST /users
 const createUser = (req, res, next) => {
@@ -40,8 +41,11 @@ const createUser = (req, res, next) => {
       return res.status(OK_CREATE).send(userWithoutPassword);
     })
     .catch((err) => {
-      console.error(err);
-      next(err);
+      if (err.name === "ValidationError") {
+        next(new BadRequestError("Invalid data provided"));
+      } else {
+        next(err);
+      }
     });
   };
 
